@@ -44,7 +44,7 @@ def post_flag_id(service_id, team_id, flag_id):
         print(f'Flag id: {flag_id}')
     else:
         r = requests.post('http://flagid:8081/postFlagId', json={
-            'token': os.environ['FLAGID_TOKEN'],
+            'token': os.environ['TOKEN'],
             'serviceId': service_id,
             'teamId': team_id,
             'round': int(os.environ['ROUND']),
