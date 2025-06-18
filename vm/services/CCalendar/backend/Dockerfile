@@ -12,3 +12,4 @@ COPY db/schema_invites.sql /var/db_schemas/schema_invites.sql
 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY scripts/setup.sh /docker-entrypoint.d/99-setup.sh
+RUN chmod +x /docker-entrypoint.d/99-setup.sh

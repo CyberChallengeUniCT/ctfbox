@@ -19,3 +19,4 @@ RUN chmod -R 755 /app
 RUN chown -R nginx:nginx /app/web
 
 COPY scripts/setup.sh /docker-entrypoint.d/99-setup.sh
+RUN chmod +x /docker-entrypoint.d/99-setup.sh
