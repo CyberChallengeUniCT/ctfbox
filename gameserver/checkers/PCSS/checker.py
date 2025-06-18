@@ -13,7 +13,7 @@ context.timeout = 5
 context.log_level = "error"
 
 
-port = 3000
+port = 6000
 data = checklib.get_data()
 action = data['action']
 team_addr = data['host']
