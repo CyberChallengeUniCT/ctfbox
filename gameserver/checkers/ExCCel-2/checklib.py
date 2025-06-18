@@ -40,8 +40,8 @@ def quit(exit_code, comment='', debug=''):
     exit(exit_code)
 
 def post_flag_id(service_id, team_id, flag_id):
-    r = requests.post(os.environ['FLAGID_SERVICE'] + '/postFlagId', json={
-        'token': os.environ['FLAGID_TOKEN'],
+    r = requests.post('http://flagid:8081/postFlagId', json={
+        'token': os.environ['TOKEN'],
         'serviceId': service_id,
         'teamId': team_id,
         'round': int(os.environ['ROUND']),
