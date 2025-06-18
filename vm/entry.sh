@@ -51,6 +51,10 @@ if [[ "$1" == "entry" ]]; then
                 echo "Executing predeploy.sh"
                 bash predeploy.sh
             fi
+            if [[ -f "$path/deploy.sh" ]]; then
+                echo "Executing deploy.sh"
+                bash deploy.sh
+            fi
             docker compose up -d --build
         fi
     done
