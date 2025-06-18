@@ -24,6 +24,10 @@ if [[ "$1" == "prebuild" ]]; then
     for path in $(find /root/ -maxdepth 1 -mindepth 1 -type d); do
         if [[ -f "$path/compose.yml" || -f "$path/compose.yaml" || -f "$path/docker-compose.yml" || -f "$path/docker-compose.yaml" ]]; then
             cd $path
+            if [[ -f "$path/prepare.sh" ]]; then
+                echo "Executing prepare.sh"
+                bash prepare.sh
+            fi
             echo "Building $path"
             docker compose build
             EXITCODE=$?
@@ -50,10 +54,6 @@ if [[ "$1" == "entry" ]]; then
             if [[ -f "$path/predeploy.sh" ]]; then
                 echo "Executing predeploy.sh"
                 bash predeploy.sh
-            fi
-            if [[ -f "$path/deploy.sh" ]]; then
-                echo "Executing deploy.sh"
-                bash deploy.sh
             fi
             docker compose up -d --build
         fi
