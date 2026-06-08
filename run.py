@@ -61,6 +61,7 @@ class Config:
     credential_server: Optional[str] = None
     debug: bool = False
     grace_time: int = 0
+    flags_identities: bool = True
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Config:

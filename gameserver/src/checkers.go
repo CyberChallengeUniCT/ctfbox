@@ -5,9 +5,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"game/db"
 	"game/log"
 	"math/rand"
+	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -16,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"hash/fnv"
 
 	"github.com/uptrace/bun"
 )
@@ -50,6 +53,43 @@ func initRand() {
 	randSrc = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
+
+func getServiceNum(service string) int {
+	h := fnv.New32a()
+	h.Write([]byte(service))
+	return int(h.Sum32()) % 1296  // garantito < 36^2
+}
+
+func encodeBase36(n uint, max_len ...int) string {
+	ml := 2
+	if len(max_len) > 0 {
+		ml = max_len[0]
+	}
+	s := strconv.FormatInt(int64(n), 36)
+	if len(s) == 1 {
+		return "0" + s
+	} else if len(s) > ml {
+		mod := uint(math.Pow(36, float64(ml)))
+		s := strconv.FormatInt(int64(n % mod), 36)
+		if len(s) == 1 {
+			return "0" + s
+		}
+	}
+	return s
+}
+
+func genFlagPrefix(round uint, team int, serviceNum int) string {
+	letters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	var flag string
+	prefix := encodeBase36(round) + encodeBase36(uint(team)) + encodeBase36(uint(serviceNum))
+	prefix = strings.ToUpper(prefix)
+	for i := 0; i < flagLen-1-len(prefix); i++ {
+		index := randSrc.Intn(len(letters))
+		flag += string(letters[index])
+	}
+	return prefix + flag + "="
+}
+
 func genFlag() string {
 	letters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	var flag string
@@ -63,7 +103,13 @@ func genFlag() string {
 func genCheckFlag(team string, service string, round uint) string {
 	var ctx context.Context = context.Background()
 	for {
-		flag := genFlag()
+		team_id, _ := strconv.Atoi(strings.Split(team, ".")[2])
+		flag := ""
+		if conf.FlagsIdentities {
+			flag = genFlagPrefix(round, team_id, getServiceNum(service))
+		} else {
+			flag = genFlag()
+		}
 		_, err := conn.NewInsert().Model(&db.Flag{
 			ID:      flag,
 			Team:    team,

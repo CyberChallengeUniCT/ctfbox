@@ -43,6 +43,7 @@ type Config struct {
 	StartTime           *string  `json:"start_time"`
 	EndTime             *string  `json:"end_time"`
 	GraceTime           *int64   `json:"grace_time"`
+	FlagsIdentities     bool     `json:"flags_identities"`
 }
 
 var conf *Config
@@ -128,7 +129,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	conf = c
 	conf.FlagRegex = "[A-Z0-9]{31}="
-
+	log.Infof("Flag Model >= CCIT25?: %v", conf.FlagsIdentities)
 	conf.RoundLen = time.Duration(conf.Round) * time.Second
 	if conf.GraceTime != nil {
 		conf.GraceDuration = time.Duration(*conf.GraceTime) * time.Second

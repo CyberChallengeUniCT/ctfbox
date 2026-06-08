@@ -110,7 +110,7 @@ MTU = 1280
 [Peer]
 PublicKey = {server_pub}
 PresharedKey = {preshared_key}
-AllowedIPs = 10.10.0.0/24, 10.60.0.0/16, 10.80.0.0/16
+AllowedIPs = 10.10.0.0/24, 10.60.0.0/16, 10.81.0.0/16
 Endpoint = {server_addr}:{server_port}
 PersistentKeepalive = 5
 """
@@ -145,7 +145,7 @@ def main():
             for profile_id in range(1, config.wireguard_profiles + 1):
                 client_private_key, client_public_key = generate_keypair()
                 preshared_key = generate_preshared_key()
-                client_ip = f"10.80.{team.id}.{profile_id}"
+                client_ip = f"10.81.{team.id}.{profile_id}"
 
                 # Add peer to server config
                 server_config += generate_server_peer(
@@ -185,7 +185,7 @@ def main():
         for profile_id in range(1, config.wireguard_profiles + 1):
             client_private_key, client_public_key = generate_keypair()
             preshared_key = generate_preshared_key()
-            client_ip = f"10.80.253.{profile_id}"
+            client_ip = f"10.81.253.{profile_id}"
 
             # Add peer to server config
             server_config += generate_server_peer(
