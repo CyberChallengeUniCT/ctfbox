@@ -85,6 +85,7 @@ func elaborateFlag(team *TeamInfo, flag string, resp *SubResp, round uint) {
 	// Calculate flag points in a db transaction to avoid inconsistencies on db
 	scoreMutex.Lock()
 	var offensePoints float64
+	var isFirstBlood bool
 	err = conn.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		attackerScore := new(db.ServiceScore)
 		victimScore := new(db.ServiceScore)
@@ -94,6 +95,15 @@ func elaborateFlag(team *TeamInfo, flag string, resp *SubResp, round uint) {
 		if err := conn.NewSelect().Model(victimScore).Where("team = ? and service = ?", info.Team, info.Service).Scan(ctx); err != nil {
 			return err
 		}
+
+		// Checked before inserting this submission, under scoreMutex, so it
+		// can never race with another submission for the same service.
+		var priorSteals int
+		if err := conn.NewSelect().Model((*db.FlagSubmission)(nil)).ColumnExpr("count(*)").Join("JOIN flags flag ON flag.id = submit.flag_id").Where("flag.service = ?", info.Service).Scan(ctx, &priorSteals); err != nil {
+			return err
+		}
+		isFirstBlood = priorSteals == 0
+
 		offensePoints = scale / (1 + math.Exp((math.Sqrt(attackerScore.Score)-math.Sqrt(victimScore.Score))*norm))
 		defensePoints := min(victimScore.Score, offensePoints)
 
@@ -122,6 +132,10 @@ func elaborateFlag(team *TeamInfo, flag string, resp *SubResp, round uint) {
 		resp.Status = "ERROR"
 		log.Errorf("Error submitting flag: %v", err)
 		return
+	}
+
+	if isFirstBlood {
+		notifyFirstBlood(team.ID, team.Name, info.Service, round)
 	}
 
 	resp.Status = "ACCEPTED"

@@ -100,6 +100,8 @@ Before run the competition, you can customize additional settings in the `config
 - `vm-mode`: The mode for running the VMs (e.g., "incus", "privileged" or "none").
 - `debug`: Enable debug mode for the game server.
 - `tick_time`: The time in seconds for each tick.
+- `first_blood_discord_webhooks`: (Optional) A list of Discord webhook URLs notified as soon as a service gets its first blood (the first successful flag steal on that service in the whole game).
+- `first_blood_telegram_notifiers`: (Optional) A list of `{"bot_token": "...", "chat_id": "..."}` objects notified via the Telegram Bot API on first blood, same trigger as above.
 - `teams`: A list of teams with their respective configurations:
   - `id`: The ID of the team.
   - `name`: The name of the team.

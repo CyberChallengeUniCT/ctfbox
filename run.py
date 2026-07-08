@@ -63,6 +63,8 @@ class Config:
     debug: bool = False
     grace_time: int = 0
     flags_identities: bool = True
+    first_blood_discord_webhooks: List[str] = field(default_factory=list)
+    first_blood_telegram_notifiers: List[Dict[str, str]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Config:

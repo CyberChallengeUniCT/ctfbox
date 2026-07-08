@@ -23,6 +23,11 @@ type TeamInfo struct {
 	Nop   bool    `json:"nop"`
 }
 
+type TelegramNotifier struct {
+	BotToken string `json:"bot_token"`
+	ChatID   string `json:"chat_id"`
+}
+
 type Config struct {
 	RoundLen            time.Duration
 	GraceDuration       time.Duration
@@ -44,6 +49,9 @@ type Config struct {
 	EndTime             *string  `json:"end_time"`
 	GraceTime           *int64   `json:"grace_time"`
 	FlagsIdentities     bool     `json:"flags_identities"`
+
+	FirstBloodDiscordWebhooks   []string           `json:"first_blood_discord_webhooks"`
+	FirstBloodTelegramNotifiers []TelegramNotifier `json:"first_blood_telegram_notifiers"`
 }
 
 var conf *Config
