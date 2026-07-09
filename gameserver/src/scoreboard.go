@@ -214,9 +214,16 @@ type TeamRoundStatus struct {
 	Services []ServiceRoundStatus `json:"services"`
 }
 
+type ServiceRoundSummary struct {
+	Service    string `json:"service"`
+	Exploiters uint   `json:"exploiters"`
+	Victims    uint   `json:"victims"`
+}
+
 type ScoreboardAPIResponse struct {
-	Round  uint              `json:"round"`
-	Scores []TeamRoundStatus `json:"scores"`
+	Round   uint                  `json:"round"`
+	Scores  []TeamRoundStatus     `json:"scores"`
+	Summary []ServiceRoundSummary `json:"summary"`
 }
 
 func handleScoreboard(w http.ResponseWriter, r *http.Request) {
@@ -224,8 +231,9 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 
 	if round < 0 {
 		if err := json.NewEncoder(w).Encode(ScoreboardAPIResponse{
-			Round:  0,
-			Scores: make([]TeamRoundStatus, 0),
+			Round:   0,
+			Scores:  make([]TeamRoundStatus, 0),
+			Summary: make([]ServiceRoundSummary, 0),
 		}); err != nil {
 			log.Errorf("Error encoding response: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -238,8 +246,9 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 	if len(conf.Teams) == 0 {
 		// No teams exist, return empty response
 		emptyResponse := ScoreboardAPIResponse{
-			Round:  uint(round),
-			Scores: []TeamRoundStatus{},
+			Round:   uint(round),
+			Scores:  []TeamRoundStatus{},
+			Summary: []ServiceRoundSummary{},
 		}
 		jsonData, err := json.Marshal(emptyResponse)
 		if err != nil {
@@ -263,6 +272,11 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 	response := ScoreboardAPIResponse{
 		Round:  uint(round),
 		Scores: make([]TeamRoundStatus, 0, len(conf.Teams)),
+	}
+
+	summaryByService := make(map[string]*ServiceRoundSummary, len(conf.Services))
+	for _, service := range conf.Services {
+		summaryByService[service] = &ServiceRoundSummary{Service: service}
 	}
 
 	ctx := context.Background()
@@ -318,6 +332,15 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 				diffFinalScore = (service.Score * service.Sla) - (prevService.Score * prevService.Sla)
 			}
 
+			if summary, ok := summaryByService[service.Service]; ok {
+				if diffStolenFlags > 0 {
+					summary.Exploiters++
+				}
+				if diffLostFlags > 0 {
+					summary.Victims++
+				}
+			}
+
 			services = append(services, ServiceRoundStatus{
 				Service:             service.Service,
 				StolenFlags:         service.StolenFlags,
@@ -350,6 +373,11 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 			Score:    totScore,
 			Services: services,
 		})
+	}
+
+	response.Summary = make([]ServiceRoundSummary, 0, len(conf.Services))
+	for _, service := range conf.Services {
+		response.Summary = append(response.Summary, *summaryByService[service])
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -538,7 +566,10 @@ type TeamStatus struct {
 }
 
 type ServiceStatus struct {
-	Name string `json:"name"`
+	Name               string  `json:"name"`
+	FirstBloodTeamId   *int    `json:"first_blood_team_id,omitempty"`
+	FirstBloodTeamName *string `json:"first_blood_team_name,omitempty"`
+	FirstBloodRound    *uint   `json:"first_blood_round,omitempty"`
 }
 
 type StatusAPIResponse struct {
@@ -587,9 +618,30 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
+	firstBloods := make([]db.FirstBlood, 0)
+	if err := conn.NewSelect().Model(&firstBloods).Scan(context.Background()); err != nil {
+		log.Errorf("Error fetching first bloods: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	firstBloodByService := make(map[string]db.FirstBlood, len(firstBloods))
+	for _, fb := range firstBloods {
+		firstBloodByService[fb.Service] = fb
+	}
+
 	services := make([]ServiceStatus, 0, len(conf.Services))
 	for _, service := range conf.Services {
-		services = append(services, ServiceStatus{Name: service})
+		status := ServiceStatus{Name: service}
+		if fb, ok := firstBloodByService[service]; ok {
+			teamId := extractTeamID(fb.Team)
+			status.FirstBloodTeamId = &teamId
+			status.FirstBloodRound = &fb.Round
+			if teamInfo := conf.getTeamByID(teamId); teamInfo != nil {
+				status.FirstBloodTeamName = &teamInfo.Name
+			}
+		}
+		services = append(services, status)
 	}
 
 	// Crea la risposta

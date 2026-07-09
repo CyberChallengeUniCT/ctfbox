@@ -17,6 +17,7 @@ import {
     useTeamSolver,
     TeamStatusInfo,
     TeamScores,
+    ServiceRoundSummary,
 } from "../scripts/query";
 import { ChartTooltipProps, LineChart } from "@mantine/charts";
 import {
@@ -30,6 +31,7 @@ import { FaHashtag } from "react-icons/fa6";
 import { ImTarget } from "react-icons/im";
 import { FaServer } from "react-icons/fa6";
 import { ServiceScoreData } from "../components/ServiceScoreData";
+import { ServiceFirstBloodSummary } from "../components/ServiceFirstBloodSummary";
 import { RoundCounter } from "../components/RoundCounter";
 import { useNavigate } from "react-router-dom";
 import { DiffArrow } from "../components/DiffArrow";
@@ -199,6 +201,12 @@ export const ScoreboardPage = () => {
         () => configData.data?.services.sort() ?? [],
         [configData.data?.services],
     );
+
+    const summaryByService = useMemo(() => {
+        const map = new Map<string, ServiceRoundSummary>();
+        scoreboardData.data?.summary?.forEach((s) => map.set(s.service, s));
+        return map;
+    }, [scoreboardData.data?.summary]);
 
     const series = useMemo(
         () =>
@@ -405,7 +413,25 @@ export const ScoreboardPage = () => {
                             ))}
                         </Table.Tr>
                     </Table.Thead>
-                    <Table.Tbody>{rows}</Table.Tbody>
+                    <Table.Tbody>
+                        <Table.Tr>
+                            <Table.Td />
+                            <Table.Td />
+                            <Table.Td />
+                            <Table.Td />
+                            {services.map((service) => (
+                                <Table.Td key={service.name}>
+                                    <ServiceFirstBloodSummary
+                                        serviceInfo={service}
+                                        summary={summaryByService.get(
+                                            service.name,
+                                        )}
+                                    />
+                                </Table.Td>
+                            ))}
+                        </Table.Tr>
+                        {rows}
+                    </Table.Tbody>
                 </Table>
             </ScrollAreaAutosize>
         </Box>

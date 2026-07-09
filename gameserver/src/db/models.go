@@ -79,6 +79,19 @@ type Environment struct {
 	Value         string `bun:",notnull"`
 }
 
+// One row per service, written once: the first successful flag steal on
+// that service in the whole game. The unique constraint on Service is what
+// makes "first" well defined; callers must only insert here after
+// confirming (under scoreMutex) that no submission for the service exists yet.
+type FirstBlood struct {
+	bun.BaseModel `bun:"table:first_bloods"`
+	ID            int64     `bun:",pk,autoincrement"`
+	Service       string    `bun:",notnull,unique"`
+	Team          string    `bun:",notnull"`
+	Round         uint      `bun:",notnull"`
+	CreatedAt     time.Time `bun:",notnull,default:current_timestamp"`
+}
+
 /*
 
 DB ENVIRONMENT VARIABLES

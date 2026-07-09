@@ -122,6 +122,15 @@ func elaborateFlag(team *TeamInfo, flag string, resp *SubResp, round uint) {
 		if _, err := conn.NewUpdate().Model(victimScore).WherePK().Set("score = score - ?", defensePoints).Set("defense = defense - ?", defensePoints).Exec(ctx); err != nil {
 			return err
 		}
+		if isFirstBlood {
+			if _, err := conn.NewInsert().Model(&db.FirstBlood{
+				Service: info.Service,
+				Team:    teamIP,
+				Round:   round,
+			}).Exec(ctx); err != nil {
+				return err
+			}
+		}
 
 		return nil
 	})

@@ -11,9 +11,16 @@ export type TeamStatusInfo = {
     nop: boolean;
 };
 
+export type ServiceStatusInfo = {
+    name: string;
+    first_blood_team_id?: number;
+    first_blood_team_name?: string;
+    first_blood_round?: number;
+};
+
 type Status = {
     teams: TeamStatusInfo[];
-    services: { name: string }[];
+    services: ServiceStatusInfo[];
     start_grace: string;
     start: string;
     end?: string;
@@ -58,9 +65,16 @@ export type TeamScores = {
     services: TeamServiceScore[];
 };
 
+export type ServiceRoundSummary = {
+    service: string;
+    exploiters: number;
+    victims: number;
+};
+
 type Scoreboard = {
     round: number;
     scores: TeamScores[];
+    summary: ServiceRoundSummary[];
 };
 
 type TeamScoreboardDetails = {

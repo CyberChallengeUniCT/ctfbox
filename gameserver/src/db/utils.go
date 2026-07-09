@@ -135,6 +135,7 @@ func InitDB() {
 		(*StatusHistory)(nil),
 		(*Environment)(nil),
 		(*ServiceScore)(nil),
+		(*FirstBlood)(nil),
 	}
 
 	// Create tables
